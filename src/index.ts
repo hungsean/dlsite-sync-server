@@ -1,6 +1,9 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import cron from 'node-cron';
+import { loginByPassword, loginStatus } from './lib/dlsite/login.js';
+import { zValidator } from '@hono/zod-validator'
+import { z } from 'zod'
 
 // #region init area
 const app = new Hono()
@@ -17,6 +20,17 @@ crontask.stop();
 
 app.get('/', (c) => {
   return c.text(`Hello Hono! count: ${count}`)
+})
+
+const loginSchema = z.object({
+  loginId: z.string(),
+  password: z.string()
+})
+app.post("/login", zValidator("json", loginSchema), async (c) => {
+  const body = c.req.valid("json");
+  await loginByPassword(body.loginId, body.password);
+  const status = await loginStatus();
+  return c.json({ ok: true, body: body, status: status });
 })
 
 serve({

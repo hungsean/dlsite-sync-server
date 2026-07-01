@@ -14,6 +14,9 @@ importers:
       hono:
         specifier: ^4.12.27
         version: 4.12.27
+      node-cron:
+        specifier: ^4.5.0
+        version: 4.5.0
     devDependencies:
       '@types/node':
         specifier: ^20.11.17
@@ -206,6 +209,10 @@ packages:
     resolution: {integrity: sha512-1yrb/+w6HWQJrUCLkJ2IF5jNIPvvFkblV5RNOYl6bV+OA6p9GLcMpHFFGTosSvHvcAUibuUukRqhlYI4z32C7Q==}
     engines: {node: '>=16.9.0'}
 
+  node-cron@4.5.0:
+    resolution: {integrity: sha512-4Trh+kjvbXokyJkwQumvD5YAgeJfgHLR/sKyu71uSmxfCR5QMO1hldpvmFZOICN5pLgNY+J5Y8+ar3XKo5/4tQ==}
+    engines: {node: '>=20'}
+
   tsx@4.22.4:
     resolution: {integrity: sha512-X8EX+XV4QR5xCsrgxaED954zTDfY8KqlDtskKEL0cHhyS/P8b4IFOvGDQpsC9Q1XnLq915wEfwwY/zzskCtmhg==}
     engines: {node: '>=18.0.0'}
@@ -340,6 +347,8 @@ snapshots:
     optional: true
 
   hono@4.12.27: {}
+
+  node-cron@4.5.0: {}
 
   tsx@4.22.4:
     dependencies:

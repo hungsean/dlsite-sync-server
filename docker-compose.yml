@@ -1,0 +1,25 @@
+services:
+  server:
+    build: ./server
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DATABASE_PATH: /data/dlsite.db
+      CORS_ORIGIN: http://localhost:8080
+      SYNC_CRON: ${SYNC_CRON:-0 4 * * *}
+      API_TOKEN: ${API_TOKEN:-}
+    volumes:
+      - dlsite-data:/data
+    ports:
+      - '3000:3000'
+
+  client:
+    build: ./client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - '8080:80'
+
+volumes:
+  dlsite-data:

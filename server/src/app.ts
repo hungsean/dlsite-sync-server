@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { logger } from 'hono/logger';
 import { corsOrigins } from './env.js';
+import { authRoutes } from './routes/auth.js';
 
 export const app = new Hono();
 
@@ -11,8 +12,7 @@ app.use('/api/*', cors({ origin: corsOrigins, credentials: true }));
 
 app.get('/api/health', (c) => c.json({ ok: true, time: new Date().toISOString() }));
 
-// 之後的路由掛在這裡:
-// app.route('/api/xxx', xxxRoutes);
+app.route('/api/auth', authRoutes);
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) {

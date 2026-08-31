@@ -1,19 +1,11 @@
-:root {
-  color-scheme: light dark;
-  font-family: system-ui, -apple-system, 'Noto Sans TC', sans-serif;
-}
+@import 'tailwindcss';
 
-body {
-  margin: 0;
-}
-
-.page {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 32px 16px;
-}
-
-.muted {
-  color: #6b6b75;
-  font-size: 14px;
+/* 保留原本的基礎設定 (深淺色 + 中文字型 fallback) */
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+  html {
+    font-family: system-ui, -apple-system, 'Noto Sans TC', sans-serif;
+  }
 }

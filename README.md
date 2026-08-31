@@ -35,6 +35,18 @@ docker compose up -d --build
 
 前端 http://localhost:8080 (nginx 反代 `/api` 到 server), 後端 http://localhost:3000, DB 存在 `dlsite-data` volume。
 
+## DLsite 登入
+
+用 DLsite 帳密登入, 後端把密碼加密存進 SQLite, cookie session 過期時會自動用帳密重登。
+
+| Method | 路徑                | 說明                                    |
+| ------ | ------------------- | --------------------------------------- |
+| `POST` | `/api/auth/login`   | body `{ loginId, password }`, 登入並保存 |
+| `GET`  | `/api/auth/status`  | 目前登入狀態 (不含密碼/cookie)          |
+| `POST` | `/api/auth/validate`| 手動驗證 session, 失效時自動重登        |
+
+密碼用 `APP_SECRET` 以 AES-256-GCM 加密後存 `dlsite_account.password_enc`; cookie 存 `dlsite_session`。密碼與 cookie 不會出現在 log。
+
 ## 加東西的時候
 
 - 資料表: 寫在 `server/src/db/schema.ts`, 然後 `pnpm db:generate` 產生 migration
@@ -51,5 +63,6 @@ server (`server/.env`):
 | `PORT`          | `3000`                  | HTTP 埠號                |
 | `CORS_ORIGIN`   | `http://localhost:5173` | 允許的前端來源, 逗號分隔 |
 | `DATABASE_PATH` | `./data/app.db`         | SQLite 檔案路徑          |
+| `APP_SECRET`    | (必填)                  | 加密 DLsite 密碼的金鑰, 至少 32 字元, 可用 `openssl rand -base64 32` 產生 |
 
 client (`client/.env`): `VITE_API_PROXY` 改開發時代理的後端位址, `VITE_API_BASE` 改正式環境的 API base url。

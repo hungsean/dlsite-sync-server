@@ -8,6 +8,8 @@ services:
       CORS_ORIGIN: http://localhost:8080
       SYNC_CRON: ${SYNC_CRON:-0 4 * * *}
       API_TOKEN: ${API_TOKEN:-}
+      # 加密 DLsite 密碼用的金鑰, 至少 32 字元
+      APP_SECRET: ${APP_SECRET:?APP_SECRET is required}
     volumes:
       - dlsite-data:/data
     ports:

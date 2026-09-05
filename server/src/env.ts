@@ -10,6 +10,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   DATABASE_PATH: z.string().default('./data/app.db'),
+  // 從 DLsite 下載的作品檔案存放目錄
+  DOWNLOAD_DIR: z.string().default('./data/downloads'),
   // 用來加密資料庫裡的 DLsite 密碼, 至少 32 字元
   APP_SECRET: z.string().min(32, 'APP_SECRET 至少需要 32 個字元'),
 });

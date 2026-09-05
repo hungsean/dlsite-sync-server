@@ -1,7 +1,12 @@
 import { desc, eq } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
 import { db } from '../db/index.js';
-import { dlsiteAccountWork, dlsiteContentCount, dlsiteWork } from '../db/schema.js';
+import {
+  dlsiteAccountWork,
+  dlsiteContentCount,
+  dlsiteDownload,
+  dlsiteWork,
+} from '../db/schema.js';
 import { fetchContentCount, fetchSales, fetchWorks } from '../lib/dlsite/content.js';
 import { ensureValidSession, getActiveAccount } from './auth.js';
 
@@ -21,6 +26,10 @@ export interface Work {
   registDate: string | null;
   updateDate: string | null;
   salesDate: string | null; // 購買日期 (帳號層)
+  contentSize: number | null; // 檔案大小 (bytes), 用來預估下載容量
+  downloadable: boolean; // 是否可下載
+  downloadStatus: string | null; // queued / downloading / done / failed, 未下載過為 null
+  downloadedBytes: number | null; // 下載進度 (bytes)
 }
 
 export interface SyncResult {
@@ -67,9 +76,14 @@ export function getWorks(): Work[] {
       registDate: dlsiteWork.registDate,
       updateDate: dlsiteWork.updateDate,
       salesDate: dlsiteAccountWork.salesDate,
+      contentSize: dlsiteWork.contentSize,
+      downloadable: dlsiteWork.downloadable,
+      downloadStatus: dlsiteDownload.status,
+      downloadedBytes: dlsiteDownload.downloadedBytes,
     })
     .from(dlsiteAccountWork)
     .innerJoin(dlsiteWork, eq(dlsiteAccountWork.workno, dlsiteWork.workno))
+    .leftJoin(dlsiteDownload, eq(dlsiteDownload.workno, dlsiteWork.workno))
     .where(eq(dlsiteAccountWork.accountId, account.id))
     .orderBy(desc(dlsiteAccountWork.salesDate))
     .all();
@@ -125,6 +139,8 @@ export async function syncWorkCount(): Promise<SyncResult> {
         thumbnailUrl: w.thumbnailUrl,
         registDate: w.registDate,
         updateDate: w.updateDate,
+        contentSize: w.contentSize,
+        downloadable: w.downloadable,
         raw: w.raw,
         updatedAt: now,
       })
@@ -138,6 +154,8 @@ export async function syncWorkCount(): Promise<SyncResult> {
           thumbnailUrl: w.thumbnailUrl,
           registDate: w.registDate,
           updateDate: w.updateDate,
+          contentSize: w.contentSize,
+          downloadable: w.downloadable,
           raw: w.raw,
           updatedAt: now,
         },

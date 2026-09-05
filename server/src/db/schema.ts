@@ -46,6 +46,8 @@ export const dlsiteWork = sqliteTable('dlsite_work', {
   thumbnailUrl: text('thumbnail_url'),
   registDate: text('regist_date'),
   updateDate: text('update_date'),
+  contentSize: integer('content_size'), // 檔案總大小 (bytes), 來自 content/works, 用來預估下載容量
+  downloadable: integer('downloadable', { mode: 'boolean' }).notNull().default(true), // 是否可下載
   raw: text('raw').notNull(), // content/works 原始 JSON, 保留未知欄位
   updatedAt: integer('updated_at', { mode: 'timestamp' })
     .notNull()
@@ -70,6 +72,28 @@ export const dlsiteAccountWork = sqliteTable(
   (t) => [primaryKey({ columns: [t.accountId, t.workno] })],
 );
 
+// 作品下載狀態: 檔案是存在伺服器磁碟上, 以 workno 為主鍵的全域資料表 (不綁帳號)。
+// 同一作品不同帳號共用同一份下載檔案。
+export const dlsiteDownload = sqliteTable('dlsite_download', {
+  workno: text('workno')
+    .primaryKey()
+    .references(() => dlsiteWork.workno),
+  // 發起下載的帳號: 排入時固定, 之後即使切換使用中帳號, 仍用這個帳號的 session 下載。
+  // 帳號被移除時設為 null (下載紀錄與檔案保留, 但無法再自動重登)。
+  accountId: integer('account_id').references(() => dlsiteAccount.id, { onDelete: 'set null' }),
+  // queued: 已排入佇列; downloading: 下載中; done: 完成; failed: 失敗
+  status: text('status').notNull().default('queued'),
+  kind: text('kind'), // direct / split, 解析下載端點後才知道
+  totalBytes: integer('total_bytes'), // 預期總大小 (bytes)
+  downloadedBytes: integer('downloaded_bytes').notNull().default(0), // 已下載大小
+  filePath: text('file_path'), // 完成後檔案 / 資料夾路徑 (相對 DOWNLOAD_DIR)
+  error: text('error'), // 失敗原因
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+});
+
 // 應用層設定 key-value 表。目前用來存 active_account_id (使用中帳號), 沒有列 = 目前沒有使用中帳號
 export const appSetting = sqliteTable('app_setting', {
   key: text('key').primaryKey(),
@@ -81,3 +105,4 @@ export type DlsiteSession = typeof dlsiteSession.$inferSelect;
 export type DlsiteContentCount = typeof dlsiteContentCount.$inferSelect;
 export type DlsiteWork = typeof dlsiteWork.$inferSelect;
 export type DlsiteAccountWork = typeof dlsiteAccountWork.$inferSelect;
+export type DlsiteDownload = typeof dlsiteDownload.$inferSelect;

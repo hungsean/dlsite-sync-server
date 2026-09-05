@@ -1,0 +1,1 @@
+ALTER TABLE `dlsite_download` ADD `account_id` integer REFERENCES dlsite_account(id);

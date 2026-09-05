@@ -80,6 +80,7 @@ server (`server/.env`):
 | `PORT`          | `3000`                  | HTTP 埠號                |
 | `CORS_ORIGIN`   | `http://localhost:5173` | 允許的前端來源, 逗號分隔 |
 | `DATABASE_PATH` | `./data/app.db`         | SQLite 檔案路徑          |
+| `DOWNLOAD_DIR`  | `./data/downloads`      | 從 DLsite 下載的作品檔案存放目錄 |
 | `APP_SECRET`    | (必填)                  | 加密 DLsite 密碼的金鑰, 至少 32 字元, 可用 `openssl rand -base64 32` 產生 |
 
 client (`client/.env`): `VITE_API_PROXY` 改開發時代理的後端位址, `VITE_API_BASE` 改正式環境的 API base url。

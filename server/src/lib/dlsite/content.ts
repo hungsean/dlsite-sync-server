@@ -75,6 +75,8 @@ export interface DlsiteWorkDetail {
   thumbnailUrl: string | null;
   registDate: string | null;
   updateDate: string | null;
+  contentSize: number | null; // 檔案總大小 (bytes)
+  downloadable: boolean; // 是否可下載
   raw: string; // 整包原始 JSON, 保留未知欄位
 }
 
@@ -144,6 +146,8 @@ export async function fetchWorks(
           : pickString(work, 'work_image'),
         registDate: pickString(work, 'regist_date'),
         updateDate: pickString(work, 'upgrade_date', 'update_date'),
+        contentSize: typeof work.content_size === 'number' ? work.content_size : null,
+        downloadable: work.downloadable !== false, // 預設可下載, 明確為 false 才不可
         raw: JSON.stringify(work),
       });
     }

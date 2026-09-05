@@ -1,4 +1,4 @@
-import { type SyntheticEvent, useState } from 'react';
+import { type SyntheticEvent, useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,19 @@ export function Login() {
   const [mode, setMode] = useState<Mode>('view');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+
+  // 首次載入若「未登入但有其他登入中的帳號」, 自動打開切換清單, 讓使用者看到有誰還登入著,
+  // 而不是直接卡在裸的登入表單。只跑一次, 之後畫面切換交給使用者操作。
+  const didInitMode = useRef(false);
+  useEffect(() => {
+    if (didInitMode.current || !status) {
+      return;
+    }
+    didInitMode.current = true;
+    if (!status.configured && accounts.length > 0) {
+      setMode('switch');
+    }
+  }, [status, accounts]);
 
   async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
@@ -60,11 +73,16 @@ export function Login() {
   }
 
   async function onLogout() {
+    if (!window.confirm(`確定要登出帳號 ${status?.loginId}?`)) {
+      return;
+    }
     setBusy(true);
     setMessage('');
     try {
       await logout();
-      setMode('view');
+      // logout 已重抓帳號清單: 還有其他登入中的帳號就進切換清單, 沒有才落回登入表單。
+      // 讀 getState() 拿最新清單 (closure 的 accounts 還是登出前的舊快照)。
+      setMode(useAccountStore.getState().accounts.length > 0 ? 'switch' : 'view');
       setMessage('已登出');
     } catch (err) {
       setMessage(toApiMessage(err));
@@ -137,7 +155,7 @@ export function Login() {
               <Button type="button" variant="outline" onClick={onValidate} disabled={busy}>
                 重新驗證 session
               </Button>
-              <Button type="button" variant="outline" onClick={onLogout} disabled={busy}>
+              <Button type="button" variant="destructive" onClick={onLogout} disabled={busy}>
                 登出
               </Button>
             </div>

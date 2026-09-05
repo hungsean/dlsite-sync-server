@@ -34,7 +34,13 @@ export const useAccountStore = create<AccountState>((set, get) => ({
   accounts: [],
 
   async refreshStatus() {
-    set({ status: await getAuthStatus() });
+    const status = await getAuthStatus();
+    set({ status });
+    // 未登入時 (剛開網頁 / 登出 / session 過期), 順手抓一次帳號清單,
+    // 好確認是不是還有其他登入中的帳號可切換, 而不是以為全部都登出了。
+    if (!status.configured) {
+      await get().refreshAccounts();
+    }
   },
 
   async refreshAccounts() {
@@ -49,6 +55,10 @@ export const useAccountStore = create<AccountState>((set, get) => ({
   async logout() {
     const { status } = await apiLogout();
     set({ status });
+    // 登出只清掉目前帳號, 其他帳號可能還登入中, 重抓清單好讓 UI 顯示可切換的帳號。
+    if (!status.configured) {
+      await get().refreshAccounts();
+    }
   },
 
   async switchAccount(id) {

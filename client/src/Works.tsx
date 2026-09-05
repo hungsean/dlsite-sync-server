@@ -10,7 +10,7 @@ import { selectActiveAccountKey, useAccountStore } from './lib/store/account';
 const WORK_TYPE_LABELS: Record<string, string> = {
   MNG: '漫畫',
   ICG: 'CG 集',
-  SOU: '音聲',
+  SOU: 'ASMR',
   MOV: '影片',
   ADV: '冒險遊戲',
   SLN: '模擬遊戲',
@@ -36,7 +36,7 @@ function toDate(iso: string): string {
 
 // 作品縮圖: 沒有 URL 或圖片載入失敗 (例如已下架的圖) 時, 退回佔位方塊。
 // shadcn 沒有 Image 元件 (只有頭像用的 Avatar), 作品縮圖是矩形, 自己做比較合適。
-function WorkThumb({ src, alt }: { src: string | null; alt: string }) {
+function WorkThumb({ src, alt }: Readonly<{ src: string | null; alt: string }>) {
   const [failed, setFailed] = useState(false);
   // src 變了 (例如重新同步換了縮圖) 就重置失敗狀態, 重新嘗試載入
   useEffect(() => {

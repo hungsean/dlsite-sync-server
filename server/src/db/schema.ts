@@ -23,5 +23,18 @@ export const dlsiteSession = sqliteTable('dlsite_session', {
   lastValidatedAt: integer('last_validated_at', { mode: 'timestamp' }),
 });
 
+// DLsite 作品數量: 最後一次同步時 content/count 回傳的擁有作品數, 單一帳號一列
+export const dlsiteContentCount = sqliteTable('dlsite_content_count', {
+  accountId: integer('account_id')
+    .primaryKey()
+    .references(() => dlsiteAccount.id, { onDelete: 'cascade' }),
+  userCount: integer('user_count').notNull(), // content/count.user, 擁有的作品數
+  productionCount: integer('production_count').notNull().default(0), // content/count.production
+  syncedAt: integer('synced_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
 export type DlsiteAccount = typeof dlsiteAccount.$inferSelect;
 export type DlsiteSession = typeof dlsiteSession.$inferSelect;
+export type DlsiteContentCount = typeof dlsiteContentCount.$inferSelect;

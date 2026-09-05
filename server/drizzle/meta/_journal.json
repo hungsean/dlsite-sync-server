@@ -8,6 +8,13 @@
       "when": 1788177896488,
       "tag": "0000_organic_husk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788592005548,
+      "tag": "0001_cool_juggernaut",
+      "breakpoints": true
     }
   ]
 }

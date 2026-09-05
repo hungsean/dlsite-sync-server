@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Login } from './Login';
+import { Works } from './Works';
 import { getHealth } from './lib/api/health';
 
 export function App() {
@@ -16,6 +17,7 @@ export function App() {
       <h1 className="text-2xl font-bold">DLsite Sync</h1>
       <p className="mt-1 text-sm text-neutral-500">{health}</p>
       <Login />
+      <Works />
     </main>
   );
 }

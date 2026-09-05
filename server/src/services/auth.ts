@@ -15,7 +15,7 @@ export interface AuthStatus {
 }
 
 // 讀目前(唯一)帳號。本次只支援單一帳號。
-function getAccount() {
+export function getAccount() {
   return db.select().from(dlsiteAccount).limit(1).get();
 }
 

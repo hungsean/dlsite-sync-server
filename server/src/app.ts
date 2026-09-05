@@ -4,6 +4,7 @@ import { HTTPException } from 'hono/http-exception';
 import { logger } from 'hono/logger';
 import { corsOrigins } from './env.js';
 import { authRoutes } from './routes/auth.js';
+import { worksRoutes } from './routes/works.js';
 
 export const app = new Hono();
 
@@ -13,6 +14,7 @@ app.use('/api/*', cors({ origin: corsOrigins, credentials: true }));
 app.get('/api/health', (c) => c.json({ ok: true, time: new Date().toISOString() }));
 
 app.route('/api/auth', authRoutes);
+app.route('/api/works', worksRoutes);
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) {

@@ -4,6 +4,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { dlsiteAccountWork, dlsiteDownload, dlsiteWork } from '../db/schema.js';
 import { env } from '../env.js';
+import { extractZip, isZip } from '../lib/archive.js';
 import {
   parseSplitPage,
   resolveDownload,
@@ -269,7 +270,7 @@ async function processOne({ workno, accountId }: QueueItem) {
     // 進度: 已完成檔案的 bytes 加上目前檔案的即時 transferred, 並節流廣播 / 落地避免洗頻。
     let baseBytes = 0;
     let lastEmit = 0;
-    let lastFilePath = '';
+    const downloadedPaths: string[] = [];
     for (const url of fileUrls) {
       const file = await streamToFile(jar, url, workDir, (transferred) => {
         const current = baseBytes + transferred;
@@ -281,9 +282,28 @@ async function processOne({ workno, accountId }: QueueItem) {
         }
       });
       baseBytes += file.bytes;
-      lastFilePath = file.filePath;
+      downloadedPaths.push(file.filePath);
     }
 
+    // 下載完成後解壓縮 zip (保留原壓縮檔, 解到專屬子目錄)。
+    // best-effort: 解壓失敗不影響「下載完成」狀態 (原檔已安全在磁碟上, 可手動處理),
+    // 但把失敗原因記進 error 欄位讓前端 / 狀態看得到。
+    let extractError: string | null = null;
+    for (const filePath of downloadedPaths) {
+      if (!isZip(filePath)) continue;
+      try {
+        await extractZip(filePath, workDir, {
+          fallbackEncoding: env.ZIP_FALLBACK_ENCODING,
+          maxRatio: env.ZIP_MAX_RATIO,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`[download] ${workno} 解壓縮失敗 (${filePath}):`, msg);
+        extractError = extractError ? `${extractError}; ${msg}` : msg;
+      }
+    }
+
+    const lastFilePath = downloadedPaths.at(-1) ?? workDir;
     const finalPath = path.relative(downloadRoot, fileUrls.length > 1 ? workDir : lastFilePath);
     updateRow(workno, {
       status: 'done',
@@ -291,9 +311,15 @@ async function processOne({ workno, accountId }: QueueItem) {
       totalBytes: baseBytes,
       filePath: finalPath,
       completedAt: new Date(),
-      error: null,
+      error: extractError, // 下載成功; 若解壓有問題記在這裡供參考 (狀態仍是 done)
     });
-    emit({ workno, status: 'done', downloadedBytes: baseBytes, totalBytes: baseBytes, error: null });
+    emit({
+      workno,
+      status: 'done',
+      downloadedBytes: baseBytes,
+      totalBytes: baseBytes,
+      error: extractError,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : '下載失敗';
     updateRow(workno, { status: 'failed', error: message });

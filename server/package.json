@@ -19,12 +19,14 @@
     "got": "^16.0.0",
     "hono": "^4.12.27",
     "tough-cookie": "^6.0.2",
+    "yauzl": "^3.4.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.15.0",
     "@types/tough-cookie": "^4.0.5",
+    "@types/yauzl": "^3.4.0",
     "drizzle-kit": "^0.31.4",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"

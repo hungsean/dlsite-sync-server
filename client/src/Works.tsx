@@ -121,7 +121,6 @@ export function Works() {
       setStats(result.stats);
       const list = await getWorks();
       setWorks(list);
-      setMessage(`同步完成, 共 ${result.worksSynced} 件作品`);
     } catch (err) {
       setMessage(err instanceof ApiError ? err.message : '連不到後端');
     } finally {
@@ -133,17 +132,19 @@ export function Works() {
 
   return (
     <Card className="mt-6">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle>作品數量</CardTitle>
+        <Button type="button" onClick={onSync} disabled={busy}>
+          {busy ? '同步中...' : '同步作品數量'}
+        </Button>
       </CardHeader>
       <CardContent>
         {synced ? (
           <div>
             <p className="text-3xl font-bold">{stats.total}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              擁有作品數
               {stats.lastSyncedAt
-                ? ` · 最後同步 ${new Date(stats.lastSyncedAt).toLocaleString()}`
+                ? `最後同步 ${new Date(stats.lastSyncedAt).toLocaleString()}`
                 : ''}
             </p>
           </div>
@@ -152,10 +153,6 @@ export function Works() {
             尚未同步, 按下方按鈕從 DLsite 取得作品數量
           </p>
         )}
-
-        <Button type="button" onClick={onSync} disabled={busy} className="mt-4">
-          {busy ? '同步中...' : '同步作品數量'}
-        </Button>
 
         {message && <p className="mt-3 text-sm text-muted-foreground">{message}</p>}
 

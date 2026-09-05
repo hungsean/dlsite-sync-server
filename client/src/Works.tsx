@@ -1,26 +1,33 @@
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from './lib/api';
 import { type WorksStats, getWorkStats, syncWorkCount } from './lib/api/works';
-
-const buttonClass =
-  'rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-700 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300';
+import { selectActiveAccountKey, useAccountStore } from './lib/store/account';
 
 export function Works() {
   const [stats, setStats] = useState<WorksStats | null>(null);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-
-  async function refreshStats() {
-    try {
-      setStats(await getWorkStats());
-    } catch {
-      // 狀態拉不到就先略過
-    }
-  }
+  // 使用中帳號的識別鍵, 值一變就重抓 (取代原本 App 用 key 強制重掛載的做法)
+  const activeAccountKey = useAccountStore(selectActiveAccountKey);
 
   useEffect(() => {
-    void refreshStats();
-  }, []);
+    // 切換帳號後先清掉舊資料, 避免畫面停留在前一個帳號的數字
+    setStats(null);
+    setMessage('');
+    let cancelled = false;
+    getWorkStats()
+      .then((data) => {
+        if (!cancelled) setStats(data);
+      })
+      .catch(() => {
+        // 狀態拉不到就先略過
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeAccountKey]);
 
   async function onSync() {
     setBusy(true);
@@ -39,28 +46,33 @@ export function Works() {
   const synced = stats && stats.total !== null;
 
   return (
-    <section className="mt-6 rounded-lg border border-neutral-300 p-5 dark:border-neutral-700">
-      <h2 className="text-lg font-semibold">作品數量</h2>
-
-      {synced ? (
-        <div className="mt-2">
-          <p className="text-3xl font-bold">{stats.total}</p>
-          <p className="mt-1 text-sm text-neutral-500">
-            擁有作品數
-            {stats.lastSyncedAt
-              ? ` · 最後同步 ${new Date(stats.lastSyncedAt).toLocaleString()}`
-              : ''}
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle>作品數量</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {synced ? (
+          <div>
+            <p className="text-3xl font-bold">{stats.total}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              擁有作品數
+              {stats.lastSyncedAt
+                ? ` · 最後同步 ${new Date(stats.lastSyncedAt).toLocaleString()}`
+                : ''}
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            尚未同步, 按下方按鈕從 DLsite 取得作品數量
           </p>
-        </div>
-      ) : (
-        <p className="mt-1 text-sm text-neutral-500">尚未同步, 按下方按鈕從 DLsite 取得作品數量</p>
-      )}
+        )}
 
-      <button type="button" onClick={onSync} disabled={busy} className={`${buttonClass} mt-4`}>
-        {busy ? '同步中...' : '同步作品數量'}
-      </button>
+        <Button type="button" onClick={onSync} disabled={busy} className="mt-4">
+          {busy ? '同步中...' : '同步作品數量'}
+        </Button>
 
-      {message && <p className="mt-3 text-sm text-neutral-500">{message}</p>}
-    </section>
+        {message && <p className="mt-3 text-sm text-muted-foreground">{message}</p>}
+      </CardContent>
+    </Card>
   );
 }

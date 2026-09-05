@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 // DLsite 帳號: 密碼以 AES-256-GCM 加密後存 password_enc, 絕不明文
 export const dlsiteAccount = sqliteTable('dlsite_account', {
@@ -35,6 +35,41 @@ export const dlsiteContentCount = sqliteTable('dlsite_content_count', {
     .$defaultFn(() => new Date()),
 });
 
+// DLsite 作品 metadata: 以 workno 為主鍵的全域資料表, 不綁帳號。
+// 不同帳號擁有同一作品共用同一列, 由 dlsite_account_work 記錄「誰擁有」。
+export const dlsiteWork = sqliteTable('dlsite_work', {
+  workno: text('workno').primaryKey(), // 例 RJ123456
+  title: text('title').notNull(),
+  makerName: text('maker_name'),
+  workType: text('work_type'),
+  ageCategory: text('age_category'), // 例 r18 / general
+  thumbnailUrl: text('thumbnail_url'),
+  registDate: text('regist_date'),
+  updateDate: text('update_date'),
+  raw: text('raw').notNull(), // content/works 原始 JSON, 保留未知欄位
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+// 帳號擁有某作品的紀錄 (accountId + workno)。未來的觀看紀錄等帳號層資料掛在這裡。
+export const dlsiteAccountWork = sqliteTable(
+  'dlsite_account_work',
+  {
+    accountId: integer('account_id')
+      .notNull()
+      .references(() => dlsiteAccount.id, { onDelete: 'cascade' }),
+    workno: text('workno')
+      .notNull()
+      .references(() => dlsiteWork.workno),
+    salesDate: text('sales_date'), // 來自 content/sales
+    syncedAt: integer('synced_at', { mode: 'timestamp' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [primaryKey({ columns: [t.accountId, t.workno] })],
+);
+
 // 應用層設定 key-value 表。目前用來存 active_account_id (使用中帳號), 沒有列 = 目前沒有使用中帳號
 export const appSetting = sqliteTable('app_setting', {
   key: text('key').primaryKey(),
@@ -44,3 +79,5 @@ export const appSetting = sqliteTable('app_setting', {
 export type DlsiteAccount = typeof dlsiteAccount.$inferSelect;
 export type DlsiteSession = typeof dlsiteSession.$inferSelect;
 export type DlsiteContentCount = typeof dlsiteContentCount.$inferSelect;
+export type DlsiteWork = typeof dlsiteWork.$inferSelect;
+export type DlsiteAccountWork = typeof dlsiteAccountWork.$inferSelect;

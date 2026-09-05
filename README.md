@@ -47,9 +47,26 @@ docker compose up -d --build
 
 密碼用 `APP_SECRET` 以 AES-256-GCM 加密後存 `dlsite_account.password_enc`; cookie 存 `dlsite_session`。密碼與 cookie 不會出現在 log。
 
+## Migration
+
+改資料表 schema 時 (在 `server/src/db/schema.ts`), 用 Drizzle Kit 產生 migration:
+
+```bash
+cd server
+pnpm db:generate        # 依 schema 差異在 server/drizzle/ 產生新的 .sql
+```
+
+migration **不用手動執行**: 後端啟動時 `server/src/db/index.ts` 會自動套用 `server/drizzle/` 底下所有還沒跑過的 migration。所以流程是:
+
+1. 改 `server/src/db/schema.ts`
+2. `pnpm db:generate` 產生 migration 檔 (記得一起 commit 進版控)
+3. `pnpm dev` (或重啟後端), 啟動時自動套用
+
+想直接看 / 改資料庫內容可以開 Drizzle Studio: `pnpm db:studio`。
+
 ## 加東西的時候
 
-- 資料表: 寫在 `server/src/db/schema.ts`, 然後 `pnpm db:generate` 產生 migration
+- 資料表: 寫在 `server/src/db/schema.ts`, 然後 `pnpm db:generate` 產生 migration (見上方 Migration)
 - 路由: 新增 `server/src/routes/*.ts`, 在 `server/src/app.ts` 掛上去
 - 外部 API / 商業邏輯: 放 `server/src/lib/`、`server/src/services/`
 - 前端畫面: `client/src/`

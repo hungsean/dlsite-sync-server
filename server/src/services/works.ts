@@ -3,7 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import { db } from '../db/index.js';
 import { dlsiteContentCount } from '../db/schema.js';
 import { fetchContentCount } from '../lib/dlsite/content.js';
-import { ensureValidSession, getAccount } from './auth.js';
+import { ensureValidSession, getActiveAccount } from './auth.js';
 
 export interface WorksStats {
   total: number | null; // 擁有的作品數, 從未同步過為 null
@@ -13,7 +13,7 @@ export interface WorksStats {
 
 // 讀最後一次同步的作品數量 (從 DB)。從未同步過時各欄位為 null。
 export function getWorkStats(): WorksStats {
-  const account = getAccount();
+  const account = getActiveAccount();
   if (!account) {
     return { total: null, production: null, lastSyncedAt: null };
   }
@@ -34,7 +34,7 @@ export function getWorkStats(): WorksStats {
 
 // 同步作品數量: 確保 session 有效後打 content/count, 把數量落地。
 export async function syncWorkCount(): Promise<WorksStats> {
-  const account = getAccount();
+  const account = getActiveAccount();
   if (!account) {
     throw new HTTPException(400, { message: '尚未設定 DLsite 帳號' });
   }

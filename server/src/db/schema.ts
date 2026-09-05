@@ -35,6 +35,12 @@ export const dlsiteContentCount = sqliteTable('dlsite_content_count', {
     .$defaultFn(() => new Date()),
 });
 
+// 應用層設定 key-value 表。目前用來存 active_account_id (使用中帳號), 沒有列 = 目前沒有使用中帳號
+export const appSetting = sqliteTable('app_setting', {
+  key: text('key').primaryKey(),
+  value: text('value'),
+});
+
 export type DlsiteAccount = typeof dlsiteAccount.$inferSelect;
 export type DlsiteSession = typeof dlsiteSession.$inferSelect;
 export type DlsiteContentCount = typeof dlsiteContentCount.$inferSelect;

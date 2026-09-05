@@ -6,6 +6,34 @@ import { ApiError } from './lib/api';
 import { type Work, type WorksStats, getWorkStats, getWorks, syncWorkCount } from './lib/api/works';
 import { selectActiveAccountKey, useAccountStore } from './lib/store/account';
 
+// DLsite work_type 代碼 -> 中文標籤。對不到的代碼直接顯示原碼。
+const WORK_TYPE_LABELS: Record<string, string> = {
+  MNG: '漫畫',
+  ICG: 'CG 集',
+  SOU: '音聲',
+  MOV: '影片',
+  ADV: '冒險遊戲',
+  SLN: '模擬遊戲',
+  RPG: 'RPG',
+  ACN: '動作遊戲',
+  STG: '射擊遊戲',
+  TBL: '桌上遊戲',
+  DNV: '數位小說',
+  PZL: '益智遊戲',
+  QIZ: '問答遊戲',
+  ET3: '其他遊戲',
+  ETC: '其他',
+};
+
+function workTypeLabel(code: string): string {
+  return WORK_TYPE_LABELS[code] ?? code;
+}
+
+// 只取日期部分 (ISO 前 10 碼, 例 2026-08-06), 避免時區換算位移。
+function toDate(iso: string): string {
+  return iso.slice(0, 10);
+}
+
 // 作品縮圖: 沒有 URL 或圖片載入失敗 (例如已下架的圖) 時, 退回佔位方塊。
 // shadcn 沒有 Image 元件 (只有頭像用的 Avatar), 作品縮圖是矩形, 自己做比較合適。
 function WorkThumb({ src, alt }: { src: string | null; alt: string }) {
@@ -144,10 +172,12 @@ export function Works() {
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span>{work.workno}</span>
                     {work.makerName && <span>· {work.makerName}</span>}
-                    {work.salesDate && <span>· 購入 {work.salesDate}</span>}
+                    {work.salesDate && <span>· 購入 {toDate(work.salesDate)}</span>}
                   </div>
                 </div>
-                {work.workType && <Badge variant="secondary">{work.workType}</Badge>}
+                {work.workType && (
+                  <Badge variant="secondary">{workTypeLabel(work.workType)}</Badge>
+                )}
               </li>
             ))}
           </ul>

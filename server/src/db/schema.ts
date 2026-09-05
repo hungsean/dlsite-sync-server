@@ -28,7 +28,7 @@ export const dlsiteContentCount = sqliteTable('dlsite_content_count', {
   accountId: integer('account_id')
     .primaryKey()
     .references(() => dlsiteAccount.id, { onDelete: 'cascade' }),
-  userCount: integer('user_count').notNull(), // content/count.user, 擁有的作品數
+  userCount: integer('user_count').notNull(), // 實際擁有的作品數 (content/works 抓到明細的筆數)
   productionCount: integer('production_count').notNull().default(0), // content/count.production
   syncedAt: integer('synced_at', { mode: 'timestamp' })
     .notNull()

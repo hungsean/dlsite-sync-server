@@ -88,27 +88,30 @@ export async function syncWorkCount(): Promise<SyncResult> {
   const count = await fetchContentCount(jar);
   const now = new Date();
 
-  db.insert(dlsiteContentCount)
-    .values({
-      accountId: account.id,
-      userCount: count.user,
-      productionCount: count.production,
-      syncedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: dlsiteContentCount.accountId,
-      set: { userCount: count.user, productionCount: count.production, syncedAt: now },
-    })
-    .run();
-
   // 抓購買清單 -> 依 workno 抓明細
   // 注意: sales 筆數會多於 works, 因為 sales 會把「漫畫系列作品」整個系列的兄弟作品都列進來,
-  // 但帳號不見得買了系列全部。works 只回實際擁有的, 所以 details.length 才是真正的擁有數,
+  // 但帳號不見得買了系列全部。works 只回實際擁有的, 所以 details.length 才是真正的擁有數
+  // (content/count.user 會把系列兄弟作品灌進去, 不拿來當擁有數);
   // works 拿不到的 sales workno 當作「系列中未購買的兄弟作品」正常略過。
   const sales = await fetchSales(jar);
   const worknos = sales.map((s) => s.workno);
   const details = await fetchWorks(jar, worknos, count.pageLimit);
   const salesDateByWorkno = new Map(sales.map((s) => [s.workno, s.salesDate]));
+
+  // 作品數量以「實際抓到明細的作品數」為準 (details.length), 而非 content/count.user
+  const ownedCount = details.length;
+  db.insert(dlsiteContentCount)
+    .values({
+      accountId: account.id,
+      userCount: ownedCount,
+      productionCount: count.production,
+      syncedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: dlsiteContentCount.accountId,
+      set: { userCount: ownedCount, productionCount: count.production, syncedAt: now },
+    })
+    .run();
 
   // 作品 metadata (全域) upsert by workno
   for (const w of details) {
@@ -154,10 +157,10 @@ export async function syncWorkCount(): Promise<SyncResult> {
 
   return {
     stats: {
-      total: count.user,
+      total: ownedCount,
       production: count.production,
       lastSyncedAt: now.toISOString(),
     },
-    worksSynced: details.length,
+    worksSynced: ownedCount,
   };
 }
